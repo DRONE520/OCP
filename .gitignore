@@ -1,0 +1,6 @@
+# binary
+Debug/
+.vs/
+x64/
+opencv/
+VideoCapture/
