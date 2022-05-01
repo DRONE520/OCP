@@ -1,0 +1,5 @@
+outer_form_circles:1
+outer_form_others:0
+inner_contours:11
+inner_form_circles:9
+inner_form_others:2
