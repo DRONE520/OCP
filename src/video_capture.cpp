@@ -53,19 +53,19 @@ const string currentDateTime() {
 
 
 bool frameAnalizer(Mat& frame, LabelParameters* lParam) {
-	// Подготовка изображения.
+	// РџРѕРґРіРѕС‚РѕРІРєР° РёР·РѕР±СЂР°Р¶РµРЅРёСЏ.
 	Mat processed = frame.clone();
 	cvtColor(processed, processed, COLOR_BGR2GRAY);
 	GaussianBlur(processed, processed, Size(3, 3), 1);
 	threshold(processed, processed, 127, 255, THRESH_BINARY);
 
-	// Нахождение контуров.
+	// РќР°С…РѕР¶РґРµРЅРёРµ РєРѕРЅС‚СѓСЂРѕРІ.
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 	Mat contourOutput = processed.clone();
 	findContours(contourOutput, contours, hierarchy, RETR_TREE, CHAIN_APPROX_NONE);
 
-	// Анализ иерархии.
+	// РђРЅР°Р»РёР· РёРµСЂР°СЂС…РёРё.
 	bool isLabelOnImage = false;
 	if (!contours.empty() && !hierarchy.empty()) {
 		bool isNextTrue = false;
@@ -74,15 +74,15 @@ bool frameAnalizer(Mat& frame, LabelParameters* lParam) {
 		bool isPrevPrevTrue = false;
 
 		for (int i = 0; i < hierarchy.size(); i++) {
-			// Если у контура есть дочерний...
+			// Р•СЃР»Рё Сѓ РєРѕРЅС‚СѓСЂР° РµСЃС‚СЊ РґРѕС‡РµСЂРЅРёР№...
 			if (hierarchy[i][2] != -1) {
 				int inner = hierarchy[i][2];
 
-				// Если у дочернего контура есть вложенные контуры...
+				// Р•СЃР»Рё Сѓ РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРЅС‚СѓСЂР° РµСЃС‚СЊ РІР»РѕР¶РµРЅРЅС‹Рµ РєРѕРЅС‚СѓСЂС‹...
 				if (hierarchy[inner][2] != -1) {
 					int inner_inner = hierarchy[inner][2];
 
-					// Проверка "следующего" контура.
+					// РџСЂРѕРІРµСЂРєР° "СЃР»РµРґСѓСЋС‰РµРіРѕ" РєРѕРЅС‚СѓСЂР°.
 					if (hierarchy[inner_inner][0] != -1) {
 						int next = hierarchy[inner_inner][0];
 						if (hierarchy[next][3] == inner && hierarchy[next][2] != -1) {
@@ -97,7 +97,7 @@ bool frameAnalizer(Mat& frame, LabelParameters* lParam) {
 						}
 					}
 
-					// Проверка "предыдущего" контура.
+					// РџСЂРѕРІРµСЂРєР° "РїСЂРµРґС‹РґСѓС‰РµРіРѕ" РєРѕРЅС‚СѓСЂР°.
 					if (hierarchy[inner_inner][1] != -1) {
 						int prev = hierarchy[inner_inner][1];
 						if (hierarchy[prev][3] == inner && hierarchy[prev][2] != -1) {
@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
 {
 	setlocale(LC_ALL, "ru");
 
-	// Параметры метки.
+	// РџР°СЂР°РјРµС‚СЂС‹ РјРµС‚РєРё.
 	LabelParameters* lParam = new LabelParameters(true, 11, 9, 2);
 
 	VideoCapture camera(0);
@@ -138,10 +138,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	// Создание именованного окна.
-	// namedWindow("Camera", WINDOW_AUTOSIZE);
-
-	// Переменные для расчёта количества кадров.
+	// РџРµСЂРµРјРµРЅРЅС‹Рµ РґР»СЏ СЂР°СЃС‡С‘С‚Р° РєРѕР»РёС‡РµСЃС‚РІР° РєР°РґСЂРѕРІ.
 	time_t startTime, curTime;
 	time(&startTime);
 	int numFramesCaptured = 0;
@@ -151,27 +148,27 @@ int main(int argc, char* argv[])
 
 	Mat frame;
 	while (1) {
-		// Получение текущего кадра.
+		// РџРѕР»СѓС‡РµРЅРёРµ С‚РµРєСѓС‰РµРіРѕ РєР°РґСЂР°.
 		Mat frame;
 		camera >> frame;
 
-		// Количество кадров в секунду.
+		// РљРѕР»РёС‡РµСЃС‚РІРѕ РєР°РґСЂРѕРІ РІ СЃРµРєСѓРЅРґСѓ.
 		numFramesCaptured++;
 		time(&curTime);
 		double secElapsed = difftime(curTime, startTime);
 		double curFPS = (double)numFramesCaptured / secElapsed;
 
-		// Обработка inf значений.
+		// РћР±СЂР°Р±РѕС‚РєР° inf Р·РЅР°С‡РµРЅРёР№.
 		if (isinf(curFPS)) curFPS = NULL;
 
-		// Проверка, что кадр получен.
+		// РџСЂРѕРІРµСЂРєР°, С‡С‚Рѕ РєР°РґСЂ РїРѕР»СѓС‡РµРЅ.
 		if (frame.empty())
 			break;
 
-		// Отображение кадра.
+		// РћС‚РѕР±СЂР°Р¶РµРЅРёРµ РєР°РґСЂР°.
 		bool isLabel = frameAnalizer(frame, lParam);
 
-		// Вывод информации о кадре.
+		// Р’С‹РІРѕРґ РёРЅС„РѕСЂРјР°С†РёРё Рѕ РєР°РґСЂРµ.
 		cout << "[" << currentDateTime() << "] - " << "Fps: " << round(curFPS) << " - Height: " << "None" << " - Detected: ";
 		(isLabel) ? cout << "True\n" : cout << "False\n";
 	}
