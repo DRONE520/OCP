@@ -56,8 +56,15 @@ bool frameAnalizer(Mat& frame, LabelParameters* lParam) {
 	// Подготовка изображения.
 	Mat processed = frame.clone();
 	cvtColor(processed, processed, COLOR_BGR2GRAY);
-	GaussianBlur(processed, processed, Size(3, 3), 1);
-	threshold(processed, processed, 127, 255, THRESH_BINARY);
+	GaussianBlur(processed, processed, Size(3, 3), 0);
+
+	// Детектирование границ Канни.
+	int lower = 84;
+	int upper = 255;
+	Canny(processed, processed, lower, upper);
+
+	// Бинаризация.
+	// threshold(processed, processed, 127, 255, THRESH_BINARY);
 
 	// Нахождение контуров.
 	vector<vector<Point> > contours;
@@ -77,37 +84,43 @@ bool frameAnalizer(Mat& frame, LabelParameters* lParam) {
 			// Если у контура есть дочерний...
 			if (hierarchy[i][2] != -1) {
 				int inner = hierarchy[i][2];
+				// Проверка, что внешний контур это окружность...
+				vector<Point> contoursOUT;
+				double len = arcLength(contours[i],true);
+				approxPolyDP(contours[i], contoursOUT, 0.01 * len,true);
+			    double area = contourArea(contours[i]);
+			   	if (contours.size() > 8 && area > 30) {
+					// Если у дочернего контура есть вложенные контуры...
+					if (hierarchy[inner][2] != -1) {
+						int inner_inner = hierarchy[inner][2];
 
-				// Если у дочернего контура есть вложенные контуры...
-				if (hierarchy[inner][2] != -1) {
-					int inner_inner = hierarchy[inner][2];
+						// Проверка "следующего" контура.
+						if (hierarchy[inner_inner][0] != -1) {
+							int next = hierarchy[inner_inner][0];
+							if (hierarchy[next][3] == inner && hierarchy[next][2] != -1) {
+								isNextTrue = true;
+							}
 
-					// Проверка "следующего" контура.
-					if (hierarchy[inner_inner][0] != -1) {
-						int next = hierarchy[inner_inner][0];
-						if (hierarchy[next][3] == inner && hierarchy[next][2] != -1) {
-							isNextTrue = true;
+							if (hierarchy[next][0] != -1 && hierarchy[next][0] != next && hierarchy[next][0] != inner_inner) {
+							    int next_next = hierarchy[next][0];
+							    if (hierarchy[next_next][3] == inner && hierarchy[next_next][2] != -1) {
+							        isNextNextTrue = true;
+							    }
+							}
 						}
 
-						if (hierarchy[next][0] != -1 && hierarchy[next][0] != next && hierarchy[next][0] != inner_inner) {
-						    int next_next = hierarchy[next][0];
-						    if (hierarchy[next_next][3] == inner && hierarchy[next_next][2] != -1) {
-						        isNextNextTrue = true;
-						    }
-						}
-					}
+						// Проверка "предыдущего" контура.
+						if (hierarchy[inner_inner][1] != -1) {
+							int prev = hierarchy[inner_inner][1];
+							if (hierarchy[prev][3] == inner && hierarchy[prev][2] != -1) {
+								isPrevTrue = true;
+							}
 
-					// Проверка "предыдущего" контура.
-					if (hierarchy[inner_inner][1] != -1) {
-						int prev = hierarchy[inner_inner][1];
-						if (hierarchy[prev][3] == inner && hierarchy[prev][2] != -1) {
-							isPrevTrue = true;
-						}
-
-						if (hierarchy[prev][1] != -1 && hierarchy[prev][1] != prev && hierarchy[prev][1] != inner_inner) {
-							int prev_prev = hierarchy[prev][1];
-							if (hierarchy[prev_prev][3] == inner && hierarchy[prev_prev][2] != -1) {
-								isPrevPrevTrue = true;
+							if (hierarchy[prev][1] != -1 && hierarchy[prev][1] != prev && hierarchy[prev][1] != inner_inner) {
+								int prev_prev = hierarchy[prev][1];
+								if (hierarchy[prev_prev][3] == inner && hierarchy[prev_prev][2] != -1) {
+									isPrevPrevTrue = true;
+								}
 							}
 						}
 					}
@@ -159,7 +172,7 @@ int main(int argc, char* argv[])
 		double curFPS = (double)numFramesCaptured / secElapsed;
 
 		// Обработка inf значений.
-		if (isinf(curFPS)) curFPS = NULL;
+		if (isinf(curFPS)) curFPS = 0.0;
 
 		// Проверка, что кадр получен.
 		if (frame.empty())
