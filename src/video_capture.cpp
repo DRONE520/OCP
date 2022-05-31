@@ -133,7 +133,7 @@ bool frameAnalizer(Mat& frame, LabelParameters* lParam) {
 		}
 	}
 
-	drawContours(frame, contours, -1, Scalar(0, 0, 255), 1);
+	// drawContours(frame, contours, -1, Scalar(0, 0, 255), 1);
 	return isLabelOnImage;
 }
 
